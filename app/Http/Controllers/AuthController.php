@@ -2,6 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -34,11 +37,23 @@ class AuthController extends Controller
     /**
      * User registration
      */
-    public function registration()
+    public function registration(Request $request)
     {
         $name = request('name');
         $email = request('email');
         $password = request('password');
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|between:2,100',
+            'email' => 'required|string|email|max:100|unique:user',
+            'password' => ['required', Password::min(8)->numbers()->mixedCase()],
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()->toArray(),
+            ]);
+        }
 
         $user = new User();
         $user->name = $name;
